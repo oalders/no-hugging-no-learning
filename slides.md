@@ -13,6 +13,7 @@ Aug 25, 2016
 oalders (GitHub)
 OALDERS (PAUSE)
 
+https://github.com/oalders/no-hugging-no-learning
 ---
 
 # The Problem
@@ -211,6 +212,18 @@ $self->minion->enqueue(
 * `parents => [$id1, $id2]` (One or more existing jobs this job depends on, and that need to have transitioned to the state `finished` before it can be processed)
 * `priority => 3` (ranges from 0-5, where 5 has the highest priority)
 * `queue => 'dexter'` (some arbitrary name, defaults to `default`)
+
+---
+
+## Minion::Job
+
+https://metacpan.org/pod/Minion::Job
+
+* You can set up events to be fired on `failed` and `finished` states
+* Get information via `$job->info`
+* `$job->is_finished`
+* `$job->remove`
+* Much, much more
 
 ---
 
