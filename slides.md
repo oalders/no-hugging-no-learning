@@ -205,6 +205,15 @@ $self->minion->enqueue(
 
 ---
 
+## enqueue() options
+* `attempts => 10` (# of times to attempt job)
+* `delay => 3600` (delay this job for 3600 seconds)
+* `parents => [$id1, $id2]` (One or more existing jobs this job depends on, and that need to have transitioned to the state `finished` before it can be processed)
+* `priority => 3` (ranges from 0-5, where 5 has the highest priority)
+* `queue => 'dexter'` (some arbitrary name, defaults to `default`)
+
+---
+
 ## Inspect Your Queue
 
 On the MetaCPAN Vagrant box:
