@@ -1,5 +1,5 @@
 <!-- $theme: gaia -->
-<!-- page_number: true -->
+<!-- page_number: false -->
 
 # No Hugging, No Learning
 
@@ -14,6 +14,7 @@ oalders (GitHub)
 OALDERS (PAUSE)
 
 https://github.com/oalders/no-hugging-no-learning
+
 ---
 
 # The Problem
@@ -28,6 +29,8 @@ https://github.com/oalders/no-hugging-no-learning
 # The Solution
 
 * Build an app based solely on what I already know: "No hugging, no learning"
+* Of the three programmer virtues (laziness, impatience and hubris), I would let laziness be my guiding light
+* I tried to self-impose a real lack of intellectual curiosity
 
 ---
 
@@ -60,11 +63,25 @@ https://github.com/oalders/no-hugging-no-learning
 
 ---
 
+### morbo
+* By default watches your filesystem for changes and then reloads your app
+
+
+---
+
+### hypnotoad
+* Zero downtime restarts
+* You don't need to provide your own init script
+* If you don't care about zero downtime or just want the prefork server, you have that option
+  * `perl script/myapp prefork`
+    * same config args as morbo/daemon
+
+---
+
 ### Did I learn?
 
 * I partly became familiar with `Mojo` via my day job, but I did have to do a fair bit of learning on my own. 
 * I was not familiar with `Hypnotoad`, but luckily that was a pretty easy transition.  The docs are really good.
-* I have most of my logic in model classes, so there's no tight coupling with the framework.  I could probably easily move to another framework at this point if I really needed to, but I don't foresee a need for that anytime soon.
 
 ---
 
@@ -91,12 +108,15 @@ https://github.com/oalders/no-hugging-no-learning
 ### After
 * OAuth via any of the available integrations
 * I needed this anyway in order to get user data, so it keeps things simpler to have `Persona` out of the mix
-* With Mozilla no longer 100% behind Persona, it becomes a less attractive solution and one which most non-technical users won't be familiar with
+* With Mozilla no longer 100% behind Persona, it becomes a less attractive solution 
+  * most non-technical users won't be familiar with it at this point anyway
 
 ---
 
-### Did I learn?
-Ironically, I actually had to learn `Persona` for my original plan.  If I had gone straight to OAuth then there would not have been much for me to learn, since `Mojo` has amazing plugin support for various OAuth providers.  Mozilla dropped `Persona` support after I had already walked away from it, but it's confirmation that I made a reasonable choice here.
+## SSL Everywhere
+
+* Looked briefly into Let's Encrypt via Ansible
+* Ended up spending USD 10 for a RapidSSL cert
 
 ---
 
@@ -105,7 +125,7 @@ Ironically, I actually had to learn `Persona` for my original plan.  If I had go
 ---
 
 ### Before
-* Application data stored in `MySQL` table
+* Application data stored in `MySQL` database
 
 ---
 
@@ -130,7 +150,9 @@ Ironically, I actually had to learn `Persona` for my original plan.  If I had go
 
 ### Did I learn?
 
-Since we use `Postgres` at `$work`, I didn't have to learn a whole lot to make the switch.
+* Since we use `Postgres` at `$work`, I didn't have to learn a whole lot to make the switch.
+* The database does a litle bit more than the bare minimum -- I'm not taking advantage of all that Postgres has to offer
+  * No `jsonb` columns just yet 
 
 ---
 
@@ -151,7 +173,10 @@ Since we use `Postgres` at `$work`, I didn't have to learn a whole lot to make t
 
 ### Did I learn?
 
-I knew nothing about `Minion`, so yes, I had to learn a fair bit.  Luckily, there's not much you need to learn in order to get up and running.  It also helped me avoid a lot of really convoluted cron job logic, so on the whole I think this was faster than sticking with what I already knew.
+* Had basically zero knowledge of Minion implementation  
+* But, there's not much you need to learn in order to get up and running
+* Minimized a lot of really convoluted cron job logic
+* This probably saved me  time in the long run
 
 ---
 
@@ -187,6 +212,55 @@ I knew nothing about `Minion`, so yes, I had to learn a fair bit.  Luckily, ther
 
 ---
 
+## Add Tasks
+
+* A task is essentially an anonymous sub which you can later refer to by name
+* A job is an instance of a task
+
+```perl
+$minion->add_task( add_things => sub {
+
+  # $job is a Minion::Job object
+  my ($job, $first, $second) = @_;
+  $job->finish($first + $second);
+});
+
+```
+
+---
+
+## More Complete Example
+```perl
+$minion->add_task( add_things => sub {
+    my ($job, $first, $second) = @_;
+    $job->finish({
+        message => 'Great!',
+        total   => $first + $second, 
+    });
+});
+
+my $id = $minion->enqueue(add_things => [1, 1]);
+
+my $result = $minion->job($id)->info->{result};
+```
+
+`$result` is now
+
+```perl
+{  message => 'Great!', total => 2 }
+```
+
+---
+
+## Storing Your Job Result
+* `$job->finish;`
+* `$job->finish('Fantastic!');`
+* `$job->finish({ foo => 'bar' });`
+
+Later, you can find this arbitrary data in `$job->result`
+
+---
+
 ## Populate Your Queue
 
 * enqueue() means "add job to queue"
@@ -202,7 +276,8 @@ $self->minion->enqueue(
 );
 ```
 
-* priority ranges from 0-5, where 5 has the highest priority
+* priority ranges from 0-X, where X is a positive integer
+* jobs with priority 10 will run before jobs with priority 9 etc
 
 ---
 
@@ -210,7 +285,7 @@ $self->minion->enqueue(
 * `attempts => 10` (# of times to attempt job)
 * `delay => 3600` (delay this job for 3600 seconds)
 * `parents => [$id1, $id2]` (One or more existing jobs this job depends on, and that need to have transitioned to the state `finished` before it can be processed)
-* `priority => 3` (ranges from 0-5, where 5 has the highest priority)
+* `priority => 3` (see previous slide)
 * `queue => 'dexter'` (some arbitrary name, defaults to `default`)
 
 ---
@@ -269,13 +344,52 @@ $app->minion->perform_jobs;
 done_testing();
 ```
 
+---
+
+## Advanced: Behaviour on Events
+
+https://github.com/jberger/Minion-Notifier/blob/master/lib/Minion/Notifier.pm#L39-L56
+
+---
+
+```perl
+sub setup_worker {
+  my $self = shift;
+
+  my $dequeue = sub {
+    my ($worker, $job) = @_;
+    my $id = $job->id;
+    $self->transport->send($id, 'dequeue');
+    $job->on(finished => sub { $self->transport->send($id, 'finished') });
+    $job->on(failed   => sub { $self->transport->send($id, 'failed') });
+  };
+
+  $self->minion->on(worker => sub {
+    my ($minion, $worker) = @_;
+    $worker->on(dequeue => $dequeue);
+  });
+
+  return $self
+}
+```
+
+---
+
+## Code Context 
+
+The preceding code is called like this:
+
+https://github.com/jberger/Minion-Notifier/blob/master/lib/Mojolicious/Plugin/Minion/Notifier.pm#L37
+
+---
+
 ## Pros
 * We can replace a failure-prone, forking, long running process with a series of jobs
 * If a job fails in an unexpected way, it doesn't prevent all the other jobs from running
 * We can check the status of all jobs at any point to gauge how things are progressing
 * Jobs which fail can be retried at intervals
 * We can start an arbitrary number of worker apps
-* Using `Postgres` replication we can now start X workers on 3 different boxes, which gives us greater scaling when needed
+* Using `Postgres` replication MetaCPAN can now start X workers on 3 different boxes, which gives us greater scaling when needed
 
 ---
 
@@ -297,9 +411,10 @@ done_testing();
 #### Pros
 * `Database::Migrator` is what we use at `$work`
 * It's pretty simple
+* In addition to SQL, you can also run Perl scripts as part of a migration
 
 #### Cons
-* `Database::Migrator` needs to be subclassed, which means you have to provide a fair bit of functionality just to get up and running.  This ended up not being the faster solution for me
+* `Database::Migrator` *needs to be subclassed*, which means you have to provide a fair bit of functionality just to get up and running
 
 ---
 
@@ -321,11 +436,18 @@ done_testing();
 
 ### Did I learn?
 
-I did have to learn `sqitch` from scratch, but the author (David Wheeler) was extremely helpful when I contacted him with questions and I was able to get it working with my fixtures.
+* Yes, I did have to learn `sqitch` from scratch
+* The author (David Wheeler) was extremely helpful
+* I was able to get it working with my fixtures
 
 ---
 
+### See Also
+* Mojo::Pg::Migrations
+* Mojo::mysql::Migrations
+* Mojo::SQLite::Migrations
 
+---
 
 ## Automation of Deployment
 
@@ -460,6 +582,7 @@ Keeping in mind how many hours I've spent battling `Puppet` on past projects, I 
 * I use this a lot when debugging interactions with 3rd party APIs
 * This only really works when you can get at the UA which a module is using
 * I wish more module authors would expose their user agents
+* The Mojo equivalent is setting `MOJO_USERAGENT_DEBUG=1`
 
 ---
 
@@ -467,12 +590,20 @@ Keeping in mind how many hours I've spent battling `Puppet` on past projects, I 
 * Use foreign keys and the schema dumper automatically sets up relationships for you
 * Use this trick to enable `perltidy` to tidy your schema files: https://metacpan.org/pod/release/ILMARI/DBIx-Class-Schema-Loader-0.07045/lib/DBIx/Class/Schema/Loader/Base.pm#filter_generated_code
 
+---
 
-----
+### Mojolicious::Plugin::AssetPack
+* Compress and convert css, less, sass, javascript and coffeescript files
+* In development mode you get the individual files in your template (for easier debugging)
+
+---
 
 ### Strict Constructors
 * MooseX::StrictConstructor
 * MooX::StrictConstructor
+* MetaCPAN::Moose
+
+---
 
 ### etc
 * `nginx`
@@ -497,7 +628,7 @@ Keeping in mind how many hours I've spent battling `Puppet` on past projects, I 
   * I created a BitBucket account (free private repositories)
   * Added a new remote to my repository "bitbucket"
   * Every time I push to the "bitbucket" remote the tests are run and I get an email about success or failure
-  * If weird errors happen, sometimes you have to clear your Wercker cache
+  * Protip: if weird errors happen, sometimes you have to clear your Wercker cache
 
 ---
 
@@ -557,12 +688,43 @@ Keeping in mind how many hours I've spent battling `Puppet` on past projects, I 
   * Hacker News
 
 ---
+
 ## Don't Count Your Chickens
 * Instagram apps (unlike the other sites) have a formal review process
 * I didn't realize until _after_ my integration was finished that my use case may not qualify
 * I _did_ get accepted at the end of the day, but it's a bit of a coin toss
 * You need to show them the integration via a screen cast before you get approval, so it's possible to do the heavy lifting and still be denied
 
+---
 
+## Success?
 
+Among other things, I ended up having to learn (or learn more about) the following technologies:
+
+* Ansible
+* BitBucket
+* Date Range Picker
+* hypnotoad
+* Minion
+* Mojo
+* Mojolicious::Plugin::AssetPack
+
+---
+* Persona
+* sqitch
+* Wercker
+* [also various 3rd party APIs for web services]
+
+---
+
+## Thanks!
+
+* To Joel Berger for proofreading the Mojo bits of an earlier version of this talk
+* All remaining (or since introduced) errors are my own
+* 
+---
+
+## The "Finished" Product
+
+https://wundercharts.com
 
