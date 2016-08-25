@@ -190,16 +190,18 @@ I knew nothing about `Minion`, so yes, I had to learn a fair bit.  Luckily, ther
 
 * enqueue() means "add job to queue"
 ```
-$app->minion->enqueue( my_task_name => [ 'foo', 'bar' ] );
+$app->minion->enqueue( my_task_name => ['foo', 'bar'] );
 ```
 
-```
+```perl
 $self->minion->enqueue(
-    track_service_resource =>
-        [ { service_resource_id => $service_resource->id } ] =>
-        { priority => 1 },
+  track_service_resource =>
+    [{ service_resource_id => $service_resource->id }] =>
+    { priority => 1 },
 );
 ```
+
+* priority ranges from 0-5, where 5 has the highest priority
 
 ---
 
@@ -207,7 +209,7 @@ $self->minion->enqueue(
 
 On the MetaCPAN Vagrant box:
 
-```
+```sh
 $ vagrant ssh
 $ cd /home/vagrant/metacpan-api/
 $ ./bin/run bin/queue.pl minion job -s
@@ -228,7 +230,7 @@ $ ./bin/run bin/queue.pl minion job -s
 
 https://github.com/metacpan/metacpan-api/blob/master/t/queue.t
 
-```
+```perl
 use MetaCPAN::Queue;
 use Test::More;
 use Test::RequiresInternet ( 'cpan.metacpan.org' => 443 );
@@ -346,7 +348,7 @@ I did have to learn `sqitch` from scratch, but the author (David Wheeler) was ex
 
 ### Ansible in Vagrantfile
 
-```
+```ruby
   config.vm.provision "ansible" do |ansible|
     ansible.verbose = "v"
     ansible.playbook = "ansible/site.yml"
@@ -362,7 +364,7 @@ I did have to learn `sqitch` from scratch, but the author (David Wheeler) was ex
 
 ### Installing Packages
 
-```
+```yaml
 ---
 - gather_facts: no
   hosts: webservers
