@@ -80,7 +80,7 @@ https://github.com/oalders/no-hugging-no-learning
 
 ### Did I learn?
 
-* I partly became familiar with `Mojo` via my day job, but I did have to do a fair bit of learning on my own. 
+* I partly became familiar with `Mojo` via my day job, but I did have to do a fair bit of learning on my own.
 * I was not familiar with `Hypnotoad`, but luckily that was a pretty easy transition.  The docs are really good.
 
 ---
@@ -108,7 +108,7 @@ https://github.com/oalders/no-hugging-no-learning
 ### After
 * OAuth via any of the available integrations
 * I needed this anyway in order to get user data, so it keeps things simpler to have `Persona` out of the mix
-* With Mozilla no longer 100% behind Persona, it becomes a less attractive solution 
+* With Mozilla no longer 100% behind Persona, it becomes a less attractive solution
   * most non-technical users won't be familiar with it at this point anyway
 
 ---
@@ -152,7 +152,7 @@ https://github.com/oalders/no-hugging-no-learning
 
 * Since we use `Postgres` at `$work`, I didn't have to learn a whole lot to make the switch.
 * The database does a litle bit more than the bare minimum -- I'm not taking advantage of all that Postgres has to offer
-  * No `jsonb` columns just yet 
+  * No `jsonb` columns just yet
 
 ---
 
@@ -173,7 +173,7 @@ https://github.com/oalders/no-hugging-no-learning
 
 ### Did I learn?
 
-* Had basically zero knowledge of Minion implementation  
+* Had basically zero knowledge of Minion implementation
 * But, there's not much you need to learn in order to get up and running
 * Minimized a lot of really convoluted cron job logic
 * This probably saved me  time in the long run
@@ -202,12 +202,12 @@ https://github.com/oalders/no-hugging-no-learning
   * Using `SQLite` for testing makes our `Travis` configuration much easier
   * This will also allow us more easily to run tests in parallel
 
---- 
+---
 
 ## Start Up Your Queue
-* In development, you can create a 4-5 line script to start up your queue via `morbo`
+* In development, you can create a 4-5 line script to start up your queue
    * https://github.com/metacpan/metacpan-api/blob/master/bin/queue.pl
-* In production we use `Daemon::Control` to manage starting and stopping a daemon 
+* In production we use `Daemon::Control` to manage starting and stopping a daemon
   * https://github.com/metacpan/metacpan-puppet/blob/master/modules/minion_queue/templates/init.pl.erb
 
 ---
@@ -235,7 +235,7 @@ $minion->add_task( add_things => sub {
     my ($job, $first, $second) = @_;
     $job->finish({
         message => 'Great!',
-        total   => $first + $second, 
+        total   => $first + $second,
     });
 });
 
@@ -336,8 +336,8 @@ my $app = MetaCPAN::Queue->new;
 
 my $release = 'https://cpan.metacpan.org/authors/id/O/OA/OALDERS/HTML-Restrict-2.2.2.tar.gz';
 
-$app->minion->enqueue( 
-    index_release => [ '--latest', $release ] 
+$app->minion->enqueue(
+    index_release => [ '--latest', $release ]
 );
 
 $app->minion->perform_jobs;
@@ -375,7 +375,7 @@ sub setup_worker {
 
 ---
 
-## Code Context 
+## Code Context
 
 The preceding code is called like this:
 
@@ -721,7 +721,7 @@ Among other things, I ended up having to learn (or learn more about) the followi
 
 * To Joel Berger for proofreading the Mojo bits of an earlier version of this talk
 * All remaining (or since introduced) errors are my own
-* 
+*
 ---
 
 ## The "Finished" Product
